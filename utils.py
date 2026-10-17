@@ -38,7 +38,7 @@ NUM_FEATURES = ["tenure", "MonthlyCharges"]
 FEATURES = CAT_FEATURES + NUM_FEATURES
 
 # ----------------------------------------------------------------------------
-# CSS (Clean Layout, Compact Hero)
+# CSS (Clean Layout, Compact Hero, Visible Sections)
 # ----------------------------------------------------------------------------
 CSS = """
 <style>
@@ -228,9 +228,20 @@ def get_d():
 
 
 # ----------------------------------------------------------------------------
-# Filters (Clean Top Bar)
+# Filters (Clean Top Bar + Quick Segments)
 # ----------------------------------------------------------------------------
+PRESETS = {
+    "🌐 All customers": lambda x: pd.Series(True, index=x.index),
+    "🆕 New (≤12 mo)": lambda x: x.tenure <= 12,
+    "🏆 Loyal (>48 mo)": lambda x: x.tenure > 48,
+    "💎 High value ($90+)": lambda x: x.MonthlyCharges >= 90,
+    "📄 Month-to-month": lambda x: x.Contract == "Month-to-month",
+    "🚨 High-risk profile": lambda x: (x.Contract == "Month-to-month") & (x.InternetService == "Fiber optic") & (x.PaymentMethod == "Electronic check"),
+    "👴 Seniors": lambda x: x.SeniorCitizen == "Yes",
+}
+
 def render_filters(df):
+    # 1. Top Dropdowns
     with st.container():
         c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1])
         
@@ -253,13 +264,35 @@ def render_filters(df):
             with st.popover("🎛️ Tenure"):
                 tenure_range = st.slider("Tenure Range", t_min, t_max, (t_min, t_max))
 
-    # Apply filters directly to the dataframe
+    # 2. Quick Segments (Pills)
+    st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+    default_preset = "🌐 All customers"
+    
+    # Use st.pills if available (Streamlit >= 1.40), else fallback to selectbox
+    if hasattr(st, "pills"):
+        selected_preset = st.pills(
+            "Quick Segments", 
+            list(PRESETS.keys()), 
+            selection_mode="single", 
+            default=default_preset,
+            label_visibility="collapsed"
+        )
+    else:
+        selected_preset = st.selectbox("Quick Segments", list(PRESETS.keys()), index=0)
+        
+    if not selected_preset:
+        selected_preset = default_preset
+
+    # 3. Apply Filters
     mask = pd.Series(True, index=df.index)
     mask &= (df["Contract"].astype(str) == val1)
     mask &= (df["InternetService"].astype(str) == val2)
     mask &= (df["PaymentMethod"].astype(str) == val3)
     mask &= (df["SeniorCitizen"].astype(str) == val4)
     mask &= df["tenure"].between(tenure_range[0], tenure_range[1])
+    
+    # Apply the quick segment mask
+    mask &= PRESETS[selected_preset](df)
     
     d = df[mask].copy()
     st.session_state["d"] = d

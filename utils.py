@@ -38,7 +38,7 @@ NUM_FEATURES = ["tenure", "MonthlyCharges"]
 FEATURES = CAT_FEATURES + NUM_FEATURES
 
 # ----------------------------------------------------------------------------
-# CSS (Compact Hero, Excel-Style Filters)
+# CSS (Clean Layout, Compact Hero, Visible Sections)
 # ----------------------------------------------------------------------------
 CSS = """
 <style>
@@ -50,20 +50,20 @@ CSS = """
                 radial-gradient(900px 400px at 100% 0%, rgba(56,189,248,.10), transparent 60%), #0b0e1a;
 }
 /* Reduced top padding to give more space to charts */
-.block-container {max-width: 100% !important; padding: 0.8rem 2rem 2rem !important;}
+.block-container {max-width: 100% !important; padding: 1rem 2rem 2rem !important;}
 
 /* Compact Hero Section */
 .hero {
     background: linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #7c3aed 100%);
-    border-radius: 10px; padding: 6px 15px; margin-bottom: 4px; margin-top: 10px;
-    box-shadow: 0 3px 15px rgba(124,58,237,.2);
-    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    border-radius: 12px; padding: 10px 18px; margin-bottom: 5px; margin-top: 15px;
+    box-shadow: 0 4px 20px rgba(124,58,237,.25);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
 }
-.hero-left h1 {margin: 0; font-size: 1.15rem; color: #fff; letter-spacing: -.3px; font-weight: 800;}
-.hero-left p {margin: 1px 0 0; color: #c7d2fe; font-size: .75rem;}
-.hero-right {display: flex; gap: 6px; align-items: center; flex-wrap: wrap;}
-.chip {display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.15);
-       color: #fff; font-size: .68rem; font-weight: 500;}
+.hero-left h1 {margin: 0; font-size: 1.3rem; color: #fff; letter-spacing: -.5px; font-weight: 800;}
+.hero-left p {margin: 2px 0 0; color: #c7d2fe; font-size: .8rem;}
+.hero-right {display: flex; gap: 8px; align-items: center; flex-wrap: wrap;}
+.chip {display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,.15);
+       color: #fff; font-size: .72rem; font-weight: 500;}
 
 .kpi-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 6px 0 15px;}
 .kpi {
@@ -100,19 +100,13 @@ div[data-testid="stPlotlyChart"] {
 }
 div[data-testid="stExpander"] {background: rgba(20,24,48,.55); border-radius: 12px;}
 
-/* Excel-Style Filter Buttons */
-div[data-testid="stPopover"] > button {
-    background-color: #1e2338 !important; 
-    border: 1px solid rgba(255,255,255,.15) !important;
-    color: #e5e7eb !important;
-    width: 100%; 
-    justify-content: space-between;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    padding: 6px 12px;
+/* Style Top Filters */
+div[data-testid="stSelectbox"] > div {
+    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
 }
-div[data-testid="stPopover"] > button:hover {
-    border-color: #7c5cff !important;
+div[data-testid="stPopover"] > button {
+    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
+    width: 100%; justify-content: center; margin-top: 2px;
 }
 </style>
 """
@@ -234,7 +228,7 @@ def get_d():
 
 
 # ----------------------------------------------------------------------------
-# Filters (Excel Style Popovers)
+# Filters (Clean Top Bar + Quick Segments)
 # ----------------------------------------------------------------------------
 PRESETS = {
     "🌐 All customers": lambda x: pd.Series(True, index=x.index),
@@ -247,37 +241,34 @@ PRESETS = {
 }
 
 def render_filters(df):
-    # Get unique options
-    contracts = sorted(df["Contract"].astype(str).unique().tolist())
-    internets = sorted(df["InternetService"].astype(str).unique().tolist())
-    payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
-    seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
-    t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
-
-    # 1. Excel-Style Filter Buttons (Row of Popovers)
+    # 1. Top Dropdowns
     with st.container():
-        c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1.2])
+        c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1])
         
+        contracts = sorted(df["Contract"].astype(str).unique().tolist())
+        internets = sorted(df["InternetService"].astype(str).unique().tolist())
+        payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
+        seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
+        t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
+
         with c1:
-            with st.popover("📄 Contract ▾"):
-                val1 = st.multiselect("Select Contract", contracts, default=contracts)
+            val1 = st.selectbox("📄 Contract", contracts)
         with c2:
-            with st.popover("🌐 Internet ▾"):
-                val2 = st.multiselect("Select Internet", internets, default=internets)
+            val2 = st.selectbox("🌐 Internet", internets)
         with c3:
-            with st.popover("💳 Payment ▾"):
-                val3 = st.multiselect("Select Payment", payments, default=payments)
+            val3 = st.selectbox("💳 Payment", payments)
         with c4:
-            with st.popover("👴 Senior ▾"):
-                val4 = st.multiselect("Select Senior", seniors, default=seniors)
+            val4 = st.selectbox("👴 Senior", seniors)
         with c5:
-            with st.popover("🎛️ Tenure ▾"):
+            st.markdown("<div style='height: 26px;'></div>", unsafe_allow_html=True)
+            with st.popover("🎛️ Tenure"):
                 tenure_range = st.slider("Tenure Range", t_min, t_max, (t_min, t_max))
 
     # 2. Quick Segments (Pills)
     st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
     default_preset = "🌐 All customers"
     
+    # Use st.pills if available (Streamlit >= 1.40), else fallback to selectbox
     if hasattr(st, "pills"):
         selected_preset = st.pills(
             "Quick Segments", 
@@ -292,15 +283,15 @@ def render_filters(df):
     if not selected_preset:
         selected_preset = default_preset
 
-    # 3. Apply Filters safely
+    # 3. Apply Filters
     mask = pd.Series(True, index=df.index)
-    
-    if val1: mask &= df["Contract"].astype(str).isin(val1)
-    if val2: mask &= df["InternetService"].astype(str).isin(val2)
-    if val3: mask &= df["PaymentMethod"].astype(str).isin(val3)
-    if val4: mask &= df["SeniorCitizen"].astype(str).isin(val4)
-    
+    mask &= (df["Contract"].astype(str) == val1)
+    mask &= (df["InternetService"].astype(str) == val2)
+    mask &= (df["PaymentMethod"].astype(str) == val3)
+    mask &= (df["SeniorCitizen"].astype(str) == val4)
     mask &= df["tenure"].between(tenure_range[0], tenure_range[1])
+    
+    # Apply the quick segment mask
     mask &= PRESETS[selected_preset](df)
     
     d = df[mask].copy()
@@ -312,12 +303,11 @@ def page_header(icon, title, subtitle):
     d, df = get_d(), load_data()
     rate = d.ChurnFlag.mean() * 100 if len(d) else 0
     
-    # Ultra Compact Hero HTML
     st.markdown(
         f'<div class="hero">'
         f'  <div class="hero-left"><h1>{icon} {title}</h1><p>{subtitle}</p></div>'
         f'  <div class="hero-right">'
-        f'    <span class="chip">👥 {len(d):,} / {len(df):,}</span>'
+        f'    <span class="chip">👥 {len(d):,} / {len(df):,} customers</span>'
         f'    <span class="chip">📉 {rate:.1f}% churn</span>'
         f'  </div>'
         f'</div>', unsafe_allow_html=True)

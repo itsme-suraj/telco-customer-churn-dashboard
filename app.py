@@ -11,6 +11,14 @@ from utils import inject_css, load_data, render_filters  # noqa: E402
 
 inject_css()
 
+# Load data and render filters at the top
+df = load_data()
+d = render_filters(df)
+
+if d.empty:
+    st.warning("No customers match these filters. Please adjust your filters above.")
+    st.stop()
+
 pages = [
     st.Page("views/executive.py", title="Executive", icon="🏠", default=True),
     st.Page("views/customers.py", title="Customers", icon="👥"),
@@ -26,9 +34,4 @@ try:
 except TypeError:
     pg = st.navigation(pages)                      # fallback: sidebar nav
 
-df = load_data()
-d = render_filters(df)
-if d.empty:
-    st.warning("No customers match these filters. Open **Filters & slicers** and press **Reset all**.")
-    st.stop()
 pg.run()

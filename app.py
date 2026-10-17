@@ -37,7 +37,28 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-DATA_PATH = Path(__file__).parent / "data" / "telco_churn.csv"
+BASE_DIR = Path(__file__).parent
+
+
+def find_data_file():
+    """Find the churn CSV anywhere in the repo (case-insensitive), so a wrong folder/name still works."""
+    exact = BASE_DIR / "data" / "telco_churn.csv"
+    if exact.exists():
+        return exact
+    for p in sorted(BASE_DIR.rglob("*.csv")):
+        if "churn" in p.name.lower() or "telco" in p.name.lower():
+            return p
+    return None
+
+
+DATA_PATH = find_data_file()
+if DATA_PATH is None:
+    st.error(
+        "Dataset not found. Upload the churn CSV to this repo as `data/telco_churn.csv` "
+        "(the `data` folder must be in the repo root, next to `app.py`)."
+    )
+    st.code("\n".join(sorted(str(x.relative_to(BASE_DIR)) for x in BASE_DIR.rglob("*") if x.is_file() and ".git" not in x.parts)[:60]))
+    st.stop()
 
 RED, TEAL, PURPLE, AMBER, BLUE = "#ff4b6e", "#2dd4bf", "#7c5cff", "#fbbf24", "#38bdf8"
 CMAP = {"Yes": RED, "No": TEAL}

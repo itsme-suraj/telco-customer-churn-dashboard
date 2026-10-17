@@ -38,7 +38,7 @@ NUM_FEATURES = ["tenure", "MonthlyCharges"]
 FEATURES = CAT_FEATURES + NUM_FEATURES
 
 # ----------------------------------------------------------------------------
-# CSS (Ultra Compact Hero, Multi-select Filters)
+# CSS (Compact Hero, Excel-Style Filters)
 # ----------------------------------------------------------------------------
 CSS = """
 <style>
@@ -52,7 +52,7 @@ CSS = """
 /* Reduced top padding to give more space to charts */
 .block-container {max-width: 100% !important; padding: 0.8rem 2rem 2rem !important;}
 
-/* Ultra Compact Hero Section */
+/* Compact Hero Section */
 .hero {
     background: linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #7c3aed 100%);
     border-radius: 10px; padding: 6px 15px; margin-bottom: 4px; margin-top: 10px;
@@ -100,14 +100,19 @@ div[data-testid="stPlotlyChart"] {
 }
 div[data-testid="stExpander"] {background: rgba(20,24,48,.55); border-radius: 12px;}
 
-/* Style Multi-select Filters */
-div[data-testid="stMultiSelect"] > div {
-    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
-    border-radius: 8px !important;
-}
+/* Excel-Style Filter Buttons */
 div[data-testid="stPopover"] > button {
-    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
-    width: 100%; justify-content: center; margin-top: 2px;
+    background-color: #1e2338 !important; 
+    border: 1px solid rgba(255,255,255,.15) !important;
+    color: #e5e7eb !important;
+    width: 100%; 
+    justify-content: space-between;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+}
+div[data-testid="stPopover"] > button:hover {
+    border-color: #7c5cff !important;
 }
 </style>
 """
@@ -229,7 +234,7 @@ def get_d():
 
 
 # ----------------------------------------------------------------------------
-# Filters (Multi-select + Quick Segments)
+# Filters (Excel Style Popovers)
 # ----------------------------------------------------------------------------
 PRESETS = {
     "🌐 All customers": lambda x: pd.Series(True, index=x.index),
@@ -242,27 +247,31 @@ PRESETS = {
 }
 
 def render_filters(df):
-    # 1. Top Multi-select Dropdowns
-    with st.container():
-        c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1])
-        
-        contracts = sorted(df["Contract"].astype(str).unique().tolist())
-        internets = sorted(df["InternetService"].astype(str).unique().tolist())
-        payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
-        seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
-        t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
+    # Get unique options
+    contracts = sorted(df["Contract"].astype(str).unique().tolist())
+    internets = sorted(df["InternetService"].astype(str).unique().tolist())
+    payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
+    seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
+    t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
 
+    # 1. Excel-Style Filter Buttons (Row of Popovers)
+    with st.container():
+        c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1.2])
+        
         with c1:
-            val1 = st.multiselect("📄 Contract", contracts, default=contracts)
+            with st.popover("📄 Contract ▾"):
+                val1 = st.multiselect("Select Contract", contracts, default=contracts)
         with c2:
-            val2 = st.multiselect("🌐 Internet", internets, default=internets)
+            with st.popover("🌐 Internet ▾"):
+                val2 = st.multiselect("Select Internet", internets, default=internets)
         with c3:
-            val3 = st.multiselect("💳 Payment", payments, default=payments)
+            with st.popover("💳 Payment ▾"):
+                val3 = st.multiselect("Select Payment", payments, default=payments)
         with c4:
-            val4 = st.multiselect("👴 Senior", seniors, default=seniors)
+            with st.popover("👴 Senior ▾"):
+                val4 = st.multiselect("Select Senior", seniors, default=seniors)
         with c5:
-            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            with st.popover("🎛️ Tenure"):
+            with st.popover("🎛️ Tenure ▾"):
                 tenure_range = st.slider("Tenure Range", t_min, t_max, (t_min, t_max))
 
     # 2. Quick Segments (Pills)
@@ -286,15 +295,12 @@ def render_filters(df):
     # 3. Apply Filters safely
     mask = pd.Series(True, index=df.index)
     
-    # If user clears all multiselect options, we don't want empty data, so we check if list is not empty
     if val1: mask &= df["Contract"].astype(str).isin(val1)
     if val2: mask &= df["InternetService"].astype(str).isin(val2)
     if val3: mask &= df["PaymentMethod"].astype(str).isin(val3)
     if val4: mask &= df["SeniorCitizen"].astype(str).isin(val4)
     
     mask &= df["tenure"].between(tenure_range[0], tenure_range[1])
-    
-    # Apply the quick segment mask
     mask &= PRESETS[selected_preset](df)
     
     d = df[mask].copy()

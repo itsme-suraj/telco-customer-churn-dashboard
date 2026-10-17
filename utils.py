@@ -38,7 +38,7 @@ NUM_FEATURES = ["tenure", "MonthlyCharges"]
 FEATURES = CAT_FEATURES + NUM_FEATURES
 
 # ----------------------------------------------------------------------------
-# CSS (Clean Layout, Compact Hero, Visible Sections)
+# CSS (Ultra Compact Hero, Multi-select Filters)
 # ----------------------------------------------------------------------------
 CSS = """
 <style>
@@ -50,20 +50,20 @@ CSS = """
                 radial-gradient(900px 400px at 100% 0%, rgba(56,189,248,.10), transparent 60%), #0b0e1a;
 }
 /* Reduced top padding to give more space to charts */
-.block-container {max-width: 100% !important; padding: 1rem 2rem 2rem !important;}
+.block-container {max-width: 100% !important; padding: 0.8rem 2rem 2rem !important;}
 
-/* Compact Hero Section */
+/* Ultra Compact Hero Section */
 .hero {
     background: linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #7c3aed 100%);
-    border-radius: 12px; padding: 10px 18px; margin-bottom: 5px; margin-top: 15px;
-    box-shadow: 0 4px 20px rgba(124,58,237,.25);
-    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    border-radius: 10px; padding: 6px 15px; margin-bottom: 4px; margin-top: 10px;
+    box-shadow: 0 3px 15px rgba(124,58,237,.2);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
 }
-.hero-left h1 {margin: 0; font-size: 1.3rem; color: #fff; letter-spacing: -.5px; font-weight: 800;}
-.hero-left p {margin: 2px 0 0; color: #c7d2fe; font-size: .8rem;}
-.hero-right {display: flex; gap: 8px; align-items: center; flex-wrap: wrap;}
-.chip {display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,.15);
-       color: #fff; font-size: .72rem; font-weight: 500;}
+.hero-left h1 {margin: 0; font-size: 1.15rem; color: #fff; letter-spacing: -.3px; font-weight: 800;}
+.hero-left p {margin: 1px 0 0; color: #c7d2fe; font-size: .75rem;}
+.hero-right {display: flex; gap: 6px; align-items: center; flex-wrap: wrap;}
+.chip {display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,.15);
+       color: #fff; font-size: .68rem; font-weight: 500;}
 
 .kpi-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 6px 0 15px;}
 .kpi {
@@ -100,9 +100,10 @@ div[data-testid="stPlotlyChart"] {
 }
 div[data-testid="stExpander"] {background: rgba(20,24,48,.55); border-radius: 12px;}
 
-/* Style Top Filters */
-div[data-testid="stSelectbox"] > div {
+/* Style Multi-select Filters */
+div[data-testid="stMultiSelect"] > div {
     background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
+    border-radius: 8px !important;
 }
 div[data-testid="stPopover"] > button {
     background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
@@ -228,7 +229,7 @@ def get_d():
 
 
 # ----------------------------------------------------------------------------
-# Filters (Clean Top Bar + Quick Segments)
+# Filters (Multi-select + Quick Segments)
 # ----------------------------------------------------------------------------
 PRESETS = {
     "🌐 All customers": lambda x: pd.Series(True, index=x.index),
@@ -241,7 +242,7 @@ PRESETS = {
 }
 
 def render_filters(df):
-    # 1. Top Dropdowns
+    # 1. Top Multi-select Dropdowns
     with st.container():
         c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1])
         
@@ -252,15 +253,15 @@ def render_filters(df):
         t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
 
         with c1:
-            val1 = st.selectbox("📄 Contract", contracts)
+            val1 = st.multiselect("📄 Contract", contracts, default=contracts)
         with c2:
-            val2 = st.selectbox("🌐 Internet", internets)
+            val2 = st.multiselect("🌐 Internet", internets, default=internets)
         with c3:
-            val3 = st.selectbox("💳 Payment", payments)
+            val3 = st.multiselect("💳 Payment", payments, default=payments)
         with c4:
-            val4 = st.selectbox("👴 Senior", seniors)
+            val4 = st.multiselect("👴 Senior", seniors, default=seniors)
         with c5:
-            st.markdown("<div style='height: 26px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
             with st.popover("🎛️ Tenure"):
                 tenure_range = st.slider("Tenure Range", t_min, t_max, (t_min, t_max))
 
@@ -268,7 +269,6 @@ def render_filters(df):
     st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
     default_preset = "🌐 All customers"
     
-    # Use st.pills if available (Streamlit >= 1.40), else fallback to selectbox
     if hasattr(st, "pills"):
         selected_preset = st.pills(
             "Quick Segments", 
@@ -283,12 +283,15 @@ def render_filters(df):
     if not selected_preset:
         selected_preset = default_preset
 
-    # 3. Apply Filters
+    # 3. Apply Filters safely
     mask = pd.Series(True, index=df.index)
-    mask &= (df["Contract"].astype(str) == val1)
-    mask &= (df["InternetService"].astype(str) == val2)
-    mask &= (df["PaymentMethod"].astype(str) == val3)
-    mask &= (df["SeniorCitizen"].astype(str) == val4)
+    
+    # If user clears all multiselect options, we don't want empty data, so we check if list is not empty
+    if val1: mask &= df["Contract"].astype(str).isin(val1)
+    if val2: mask &= df["InternetService"].astype(str).isin(val2)
+    if val3: mask &= df["PaymentMethod"].astype(str).isin(val3)
+    if val4: mask &= df["SeniorCitizen"].astype(str).isin(val4)
+    
     mask &= df["tenure"].between(tenure_range[0], tenure_range[1])
     
     # Apply the quick segment mask
@@ -303,11 +306,12 @@ def page_header(icon, title, subtitle):
     d, df = get_d(), load_data()
     rate = d.ChurnFlag.mean() * 100 if len(d) else 0
     
+    # Ultra Compact Hero HTML
     st.markdown(
         f'<div class="hero">'
         f'  <div class="hero-left"><h1>{icon} {title}</h1><p>{subtitle}</p></div>'
         f'  <div class="hero-right">'
-        f'    <span class="chip">👥 {len(d):,} / {len(df):,} customers</span>'
+        f'    <span class="chip">👥 {len(d):,} / {len(df):,}</span>'
         f'    <span class="chip">📉 {rate:.1f}% churn</span>'
         f'  </div>'
         f'</div>', unsafe_allow_html=True)

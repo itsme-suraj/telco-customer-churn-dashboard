@@ -253,15 +253,23 @@ def render_filters(df):
     c1, c2, c3, c4, c5 = st.columns([1.2, 1, 1, 1, 1])
     
     with c1:
-        st.selectbox("Contract", defaults["f_contract"], key="f_contract", label_visibility="collapsed")
+        # Ensure it always returns a list
+        val1 = st.selectbox("Contract", defaults["f_contract"], key="f_contract", label_visibility="collapsed")
+        st.session_state.f_contract = [val1] if isinstance(val1, str) else val1
+        
     with c2:
-        st.selectbox("Internet", defaults["f_internet"], key="f_internet", label_visibility="collapsed")
+        val2 = st.selectbox("Internet", defaults["f_internet"], key="f_internet", label_visibility="collapsed")
+        st.session_state.f_internet = [val2] if isinstance(val2, str) else val2
+        
     with c3:
-        st.selectbox("Payment", defaults["f_payment"], key="f_payment", label_visibility="collapsed")
+        val3 = st.selectbox("Payment", defaults["f_payment"], key="f_payment", label_visibility="collapsed")
+        st.session_state.f_payment = [val3] if isinstance(val3, str) else val3
+        
     with c4:
-        st.selectbox("Senior", defaults["f_senior"], key="f_senior", label_visibility="collapsed")
+        val4 = st.selectbox("Senior", defaults["f_senior"], key="f_senior", label_visibility="collapsed")
+        st.session_state.f_senior = [val4] if isinstance(val4, str) else val4
+        
     with c5:
-        # Ek popover mein tenure slider daal diya taaki screen clean rahe
         with st.popover("🎛️ Tenure Filter"):
             st.slider("Tenure (months)", t_min, t_max, key="f_tenure")
             if st.button("Reset Filters", use_container_width=True):
@@ -271,8 +279,12 @@ def render_filters(df):
 
     ss = st.session_state
     mask = pd.Series(True, index=df.index)
+    
     for k, (col, _) in MULTI.items():
-        mask &= df[col].astype(str).isin(ss[k])
+        # Convert to list just in case streamlit returns a string
+        vals = ss[k] if isinstance(ss[k], list) else [ss[k]]
+        mask &= df[col].astype(str).isin(vals)
+        
     mask &= df.tenure.between(*ss.f_tenure)
     
     d = df[mask].copy()
@@ -296,7 +308,7 @@ def page_header(icon, title, subtitle):
 
 
 # ----------------------------------------------------------------------------
-# Chart helpers & ML (Keep exactly as before)
+# Chart helpers & ML
 # ----------------------------------------------------------------------------
 def rate_by(d, col):
     g = (d.groupby(col, observed=True)

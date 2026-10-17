@@ -1,28 +1,34 @@
-# 📉 Telco Customer Churn Intelligence Dashboard
+# 📉 Telco Customer Churn Intelligence
 
-An interactive analytics dashboard that shows **who is churning, why, and how much revenue is at risk**, with an ML model that predicts churn for any customer.
+A **multi-page, full-width, mobile-friendly** analytics dashboard that shows who is churning, why, how much revenue is at risk, and what to do about it. Includes an ML churn predictor and a **what-if scenario simulator** with ROI.
 
-🔗 **Live demo:** _add your Streamlit link here_
+🔗 **Live demo:** _paste your Streamlit link here_
 
-![Dashboard preview](screenshots/overview.png)
+![Dashboard preview](screenshots/executive.png)
 
-## ✨ Features
-- **8 live KPI cards** (churn rate vs overall, revenue at risk, avg tenure, lifetime value...)
-- **Sidebar slicers**: contract, internet service, payment method, tenure, monthly charges, demographics + one-click reset
-- **Overview, Deep Dive, Churn Predictor, Insights, Data** tabs
-- **Random Forest churn predictor** with ROC curve, confusion matrix, feature importance
-- **Single-customer risk gauge** with recommended retention actions
-- **Retention hit-list**: active customers ranked by churn risk (downloadable CSV)
-- **Auto-generated insights** that change with the filters
+## 📑 Pages
+| Page | What you get |
+|---|---|
+| 🏠 Executive | 8 KPI cards, churn split, tenure windows, revenue-lost treemap, auto-insights, actions |
+| 👥 Customers | Demographics, household types, senior vs non-senior behaviour |
+| 📦 Services | Internet, phone, add-on protection effect, bundles, price vs service |
+| 💰 Revenue | MRR, ARPU, billing choices, Pareto of revenue loss, lifetime value |
+| ⏳ Lifecycle | Kaplan-Meier retention curves, churn by tenure window, lifecycle heatmaps |
+| 🎬 Simulator | Pick retention actions, get customers saved, revenue gain, cost and ROI |
+| 🤖 Predictor | Random Forest metrics, single-customer risk gauge, downloadable retention hit-list |
+| 🗂️ Explorer | Build-your-own pivot heatmap, search and export data |
 
-## 🔑 Key insights
-- Month-to-month contracts churn at ~43% vs ~3% for two-year contracts.
-- Customers in their first 12 months are the most likely to leave.
-- Electronic-check payers and fiber-optic customers churn the most.
-- Tech Support and Online Security customers churn far less.
+## 🎛️ Filters (work on every page)
+Quick-segment pills (New, Loyal, High value, Month-to-month, High-risk profile, Seniors), dropdown multi-selects for 8 fields, tenure and charge sliders, one-click reset.
+
+## 🔑 Key findings
+- Month-to-month churn is ~43% vs ~3% for two-year contracts.
+- ~47% of first-year customers churn vs ~17% afterwards.
+- Electronic-check payers (~45%) and fiber customers (~42%) churn the most.
+- Customers with Tech Support or Online Security churn ~15% vs ~42% without.
 
 ## 🛠️ Tech stack
-Python · Streamlit · Plotly · scikit-learn · pandas
+Python · Streamlit (multipage navigation) · Plotly · scikit-learn · pandas
 
 ## 🚀 Run locally
 ```bash
@@ -32,11 +38,12 @@ streamlit run app.py
 
 ## 📂 Structure
 ```
-app.py                 # dashboard
-data/telco_churn.csv   # IBM Telco churn dataset (7,043 customers)
-requirements.txt
-.streamlit/config.toml # dark theme
+app.py            # navigation + global filters
+utils.py          # data, CSS, filters, chart helpers, ML model
+views/            # one file per page
+data/telco_churn.csv
+.streamlit/config.toml
 ```
 
 ## 📊 Data
-IBM Telco Customer Churn sample dataset.
+IBM Telco Customer Churn sample dataset (7,043 customers).

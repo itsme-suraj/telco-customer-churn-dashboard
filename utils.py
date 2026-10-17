@@ -38,7 +38,7 @@ NUM_FEATURES = ["tenure", "MonthlyCharges"]
 FEATURES = CAT_FEATURES + NUM_FEATURES
 
 # ----------------------------------------------------------------------------
-# CSS (Compact Hero, Top Right Filters, more chart space)
+# CSS (Clean Layout, Compact Hero)
 # ----------------------------------------------------------------------------
 CSS = """
 <style>
@@ -50,20 +50,20 @@ CSS = """
                 radial-gradient(900px 400px at 100% 0%, rgba(56,189,248,.10), transparent 60%), #0b0e1a;
 }
 /* Reduced top padding to give more space to charts */
-.block-container {max-width: 100% !important; padding: 1.5rem 2rem 2rem !important;}
+.block-container {max-width: 100% !important; padding: 1rem 2rem 2rem !important;}
 
 /* Compact Hero Section */
 .hero {
     background: linear-gradient(120deg, #1e1b4b 0%, #312e81 45%, #7c3aed 100%);
-    border-radius: 16px; padding: 12px 20px; margin-bottom: 10px;
-    box-shadow: 0 8px 30px rgba(124,58,237,.25);
+    border-radius: 12px; padding: 10px 18px; margin-bottom: 5px; margin-top: 15px;
+    box-shadow: 0 4px 20px rgba(124,58,237,.25);
     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
 }
-.hero-left h1 {margin: 0; font-size: 1.4rem; color: #fff; letter-spacing: -.5px; font-weight: 800;}
-.hero-left p {margin: 2px 0 0; color: #c7d2fe; font-size: .85rem;}
+.hero-left h1 {margin: 0; font-size: 1.3rem; color: #fff; letter-spacing: -.5px; font-weight: 800;}
+.hero-left p {margin: 2px 0 0; color: #c7d2fe; font-size: .8rem;}
 .hero-right {display: flex; gap: 8px; align-items: center; flex-wrap: wrap;}
 .chip {display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,.15);
-       color: #fff; font-size: .72rem;}
+       color: #fff; font-size: .72rem; font-weight: 500;}
 
 .kpi-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 6px 0 15px;}
 .kpi {
@@ -84,9 +84,15 @@ CSS = """
 .insight .b {color: #b6bedc; font-size: .85rem; line-height: 1.4;}
 .action {border-left: 4px solid #7c5cff;}
 
-.sec {font-size: 1rem; font-weight: 700; color: #e5e7eb; margin: 15px 0 6px; padding-left: 10px;
-      border-left: 3px solid #7c5cff;}
-.sec small {color: #9aa3c7; font-weight: 400; margin-left: 6px; font-size: .8rem;}
+/* Section Headings Visibility Fix */
+.sec {
+    font-size: 1.1rem; font-weight: 700; color: #f3f4f6; 
+    margin: 20px 0 10px 0; padding: 6px 0 6px 12px;
+    border-left: 4px solid #7c5cff; 
+    background: linear-gradient(90deg, rgba(124,58,237,0.1) 0%, transparent 100%);
+    border-radius: 0 8px 8px 0;
+}
+.sec small {color: #9aa3c7; font-weight: 400; margin-left: 8px; font-size: .85rem;}
 
 div[data-testid="stPlotlyChart"] {
     background: rgba(20,24,48,.55); border: 1px solid rgba(255,255,255,.06);
@@ -95,19 +101,12 @@ div[data-testid="stPlotlyChart"] {
 div[data-testid="stExpander"] {background: rgba(20,24,48,.55); border-radius: 12px;}
 
 /* Style Top Filters */
-div[data-testid="stSelectbox"] > div, div[data-testid="stPopover"] > button {
-    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.1) !important;
+div[data-testid="stSelectbox"] > div {
+    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
 }
-
-@media (max-width: 640px) {
-    .block-container {padding: 1rem .7rem 2rem !important;}
-    .hero {padding: 10px 14px; border-radius: 12px; flex-direction: column; align-items: flex-start;}
-    .hero-left h1 {font-size: 1.2rem;} .hero-left p {font-size: .8rem;}
-    .kpi-grid {grid-template-columns: repeat(2, 1fr); gap: 8px;}
-    .kpi {padding: 8px 10px;} .kpi-value {font-size: 1.2rem;} .kpi-icon {display: none;}
-    .kpi-label {font-size: .6rem;} .kpi-sub {font-size: .65rem;}
-    .insight-grid {grid-template-columns: 1fr;}
-    .sec {font-size: .9rem;}
+div[data-testid="stPopover"] > button {
+    background-color: #161a2e !important; border: 1px solid rgba(255,255,255,.15) !important;
+    width: 100%; justify-content: center; margin-top: 2px;
 }
 </style>
 """
@@ -229,31 +228,30 @@ def get_d():
 
 
 # ----------------------------------------------------------------------------
-# Filters (Simple Top Right)
+# Filters (Clean Top Bar)
 # ----------------------------------------------------------------------------
 def render_filters(df):
-    t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
-    
-    # Get unique options for dropdowns
-    contracts = sorted(df["Contract"].astype(str).unique().tolist())
-    internets = sorted(df["InternetService"].astype(str).unique().tolist())
-    payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
-    seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
+    with st.container():
+        c1, c2, c3, c4, c5 = st.columns([1.5, 1.5, 1.5, 1.2, 1])
+        
+        contracts = sorted(df["Contract"].astype(str).unique().tolist())
+        internets = sorted(df["InternetService"].astype(str).unique().tolist())
+        payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
+        seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
+        t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
 
-    # Render simple dropdowns in Top Right using columns
-    c1, c2, c3, c4, c5 = st.columns([1.2, 1, 1, 1, 1])
-    
-    with c1:
-        val1 = st.selectbox("Contract", contracts, label_visibility="collapsed")
-    with c2:
-        val2 = st.selectbox("Internet", internets, label_visibility="collapsed")
-    with c3:
-        val3 = st.selectbox("Payment", payments, label_visibility="collapsed")
-    with c4:
-        val4 = st.selectbox("Senior", seniors, label_visibility="collapsed")
-    with c5:
-        with st.popover("🎛️ Tenure Filter"):
-            tenure_range = st.slider("Tenure (months)", t_min, t_max, (t_min, t_max))
+        with c1:
+            val1 = st.selectbox("📄 Contract", contracts)
+        with c2:
+            val2 = st.selectbox("🌐 Internet", internets)
+        with c3:
+            val3 = st.selectbox("💳 Payment", payments)
+        with c4:
+            val4 = st.selectbox("👴 Senior", seniors)
+        with c5:
+            st.markdown("<div style='height: 26px;'></div>", unsafe_allow_html=True)
+            with st.popover("🎛️ Tenure"):
+                tenure_range = st.slider("Tenure Range", t_min, t_max, (t_min, t_max))
 
     # Apply filters directly to the dataframe
     mask = pd.Series(True, index=df.index)
@@ -272,12 +270,11 @@ def page_header(icon, title, subtitle):
     d, df = get_d(), load_data()
     rate = d.ChurnFlag.mean() * 100 if len(d) else 0
     
-    # Compact Hero Layout
     st.markdown(
         f'<div class="hero">'
         f'  <div class="hero-left"><h1>{icon} {title}</h1><p>{subtitle}</p></div>'
         f'  <div class="hero-right">'
-        f'    <span class="chip">👥 {len(d):,} / {len(df):,}</span>'
+        f'    <span class="chip">👥 {len(d):,} / {len(df):,} customers</span>'
         f'    <span class="chip">📉 {rate:.1f}% churn</span>'
         f'  </div>'
         f'</div>', unsafe_allow_html=True)

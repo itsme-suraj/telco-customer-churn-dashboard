@@ -231,64 +231,40 @@ def get_d():
 # ----------------------------------------------------------------------------
 # Filters (Simple Top Right)
 # ----------------------------------------------------------------------------
-MULTI = {
-    "f_contract": ("Contract", "Contract"),
-    "f_internet": ("InternetService", "Internet"),
-    "f_payment": ("PaymentMethod", "Payment"),
-    "f_senior": ("SeniorCitizen", "Senior"),
-}
-
-def _opts(df, col):
-    return sorted(df[col].astype(str).unique().tolist())
-
 def render_filters(df):
     t_min, t_max = int(df.tenure.min()), int(df.tenure.max())
-    defaults = {k: _opts(df, col) for k, (col, _) in MULTI.items()}
-    defaults["f_tenure"] = (t_min, t_max)
     
-    for k, v in defaults.items():
-        st.session_state.setdefault(k, v)
+    # Get unique options for dropdowns
+    contracts = sorted(df["Contract"].astype(str).unique().tolist())
+    internets = sorted(df["InternetService"].astype(str).unique().tolist())
+    payments = sorted(df["PaymentMethod"].astype(str).unique().tolist())
+    seniors = sorted(df["SeniorCitizen"].astype(str).unique().tolist())
 
     # Render simple dropdowns in Top Right using columns
     c1, c2, c3, c4, c5 = st.columns([1.2, 1, 1, 1, 1])
     
     with c1:
-        # Ensure it always returns a list
-        val1 = st.selectbox("Contract", defaults["f_contract"], key="f_contract", label_visibility="collapsed")
-        st.session_state.f_contract = [val1] if isinstance(val1, str) else val1
-        
+        val1 = st.selectbox("Contract", contracts, label_visibility="collapsed")
     with c2:
-        val2 = st.selectbox("Internet", defaults["f_internet"], key="f_internet", label_visibility="collapsed")
-        st.session_state.f_internet = [val2] if isinstance(val2, str) else val2
-        
+        val2 = st.selectbox("Internet", internets, label_visibility="collapsed")
     with c3:
-        val3 = st.selectbox("Payment", defaults["f_payment"], key="f_payment", label_visibility="collapsed")
-        st.session_state.f_payment = [val3] if isinstance(val3, str) else val3
-        
+        val3 = st.selectbox("Payment", payments, label_visibility="collapsed")
     with c4:
-        val4 = st.selectbox("Senior", defaults["f_senior"], key="f_senior", label_visibility="collapsed")
-        st.session_state.f_senior = [val4] if isinstance(val4, str) else val4
-        
+        val4 = st.selectbox("Senior", seniors, label_visibility="collapsed")
     with c5:
         with st.popover("🎛️ Tenure Filter"):
-            st.slider("Tenure (months)", t_min, t_max, key="f_tenure")
-            if st.button("Reset Filters", use_container_width=True):
-                for k, v in defaults.items():
-                    st.session_state[k] = v
-                st.rerun()
+            tenure_range = st.slider("Tenure (months)", t_min, t_max, (t_min, t_max))
 
-    ss = st.session_state
+    # Apply filters directly to the dataframe
     mask = pd.Series(True, index=df.index)
-    
-    for k, (col, _) in MULTI.items():
-        # Convert to list just in case streamlit returns a string
-        vals = ss[k] if isinstance(ss[k], list) else [ss[k]]
-        mask &= df[col].astype(str).isin(vals)
-        
-    mask &= df.tenure.between(*ss.f_tenure)
+    mask &= (df["Contract"].astype(str) == val1)
+    mask &= (df["InternetService"].astype(str) == val2)
+    mask &= (df["PaymentMethod"].astype(str) == val3)
+    mask &= (df["SeniorCitizen"].astype(str) == val4)
+    mask &= df["tenure"].between(tenure_range[0], tenure_range[1])
     
     d = df[mask].copy()
-    ss["d"] = d
+    st.session_state["d"] = d
     return d
 
 
@@ -296,7 +272,7 @@ def page_header(icon, title, subtitle):
     d, df = get_d(), load_data()
     rate = d.ChurnFlag.mean() * 100 if len(d) else 0
     
-    # Compact Hero Layout with Filters on the right (visually)
+    # Compact Hero Layout
     st.markdown(
         f'<div class="hero">'
         f'  <div class="hero-left"><h1>{icon} {title}</h1><p>{subtitle}</p></div>'
